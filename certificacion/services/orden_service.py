@@ -3,14 +3,6 @@ from django.utils import timezone
 from django.conf import settings
 from certificacion.models import Orden
 
-def get_next_order_number():
-    """
-    Calculates the next available order number by finding the maximum
-    existing numero_orden and adding one. Starts from 1 if no orders exist.
-    """
-    max_order = Orden.objects.all().order_by('-numero_orden').first()
-    return (max_order.numero_orden + 1) if max_order else 1
-
 def calculate_delivery_date(start_date):
     """
     Calculates the suggested delivery date based on business hours

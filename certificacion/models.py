@@ -14,16 +14,7 @@ class MaterialJoya(models.Model):
         return self.nombre
 
 class Orden(models.Model):
-    TIPO_CERTIFICADO_CHOICES = [
-        ('Verbal', 'Verbal'),
-        ('Gem Card', 'Gem Card'),
-        ('Escrito', 'Escrito'),
-        ('Reimpresion', 'Reimpresión'),
-        ('Verbal a Gem Card o Escrito', 'Verbal a Gem Card o Escrito'),
-    ]
-
-    numero_orden = models.PositiveIntegerField(unique=True, editable=False)
-    tiene_seguro = models.BooleanField(default=False)
+    numero_orden = models.CharField(max_length=100, unique=True)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_entrega_sugerida = models.DateTimeField()
     tags = models.TextField(blank=True)
@@ -67,6 +58,11 @@ class Item(models.Model):
 
     # Field for 'Set de joyas' (multiple types of jewelry)
     tipos_joya = models.ManyToManyField(TipoJoya, related_name='items_set', blank=True)
+
+    # Field for 'Topos' jewelry
+    tiene_seguro = models.BooleanField(default=False)
+
+    tags = models.TextField(blank=True)
 
     def __str__(self):
         return f"Item {self.id} de la Orden {self.orden.numero_orden}"

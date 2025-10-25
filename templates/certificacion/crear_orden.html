@@ -22,9 +22,9 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="grid grid-cols-1 gap-6">
-                    <div class="flex items-center">
-                        {{ form.tiene_seguro }}
-                        <label for="{{ form.tiene_seguro.id_for_label }}" class="ml-2 block text-sm text-gray-900">¿Tiene Seguro?</label>
+                    <div>
+                        <label for="{{ form.numero_orden.id_for_label }}" class="block text-sm font-medium text-gray-700">Número de Orden</label>
+                        {{ form.numero_orden }}
                     </div>
                     <div>
                         <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700">Tags</label>
