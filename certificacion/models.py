@@ -63,6 +63,8 @@ class Item(models.Model):
     tiene_seguro = models.BooleanField(default=False)
 
     tags = models.TextField(blank=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Item {self.id} de la Orden {self.orden.numero_orden}"

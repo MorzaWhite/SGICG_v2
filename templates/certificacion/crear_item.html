@@ -3,151 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Item a Orden</title>
+    <title>Gestionar Items de Orden</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         .form-field { display: none; }
-        .preview-field { display: none; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Form Section -->
-        <div class="bg-white p-8 rounded-lg shadow-md">
-            <h1 class="text-2xl font-bold mb-6">Agregar Item a la Orden {{ orden.numero_orden }}</h1>
-
-            {% if form.non_field_errors %}
-                <div class="mb-4 p-4 rounded bg-red-100 text-red-700">
-                    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-                </div>
-            {% endif %}
-
-            <form method="post" id="item-form" class="space-y-6">
-                {% csrf_token %}
-                <!-- Static Fields -->
-                <div><label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700">Tags</label>{{ form.tags }}</div>
-                <div><label for="{{ form.tipo_certificado.id_for_label }}" class="block text-sm font-medium text-gray-700">Tipo de Certificado</label>{{ form.tipo_certificado }}</div>
-                <div><label for="{{ form.tipo_item.id_for_label }}" class="block text-sm font-medium text-gray-700">Tipo de Ítem</label>{{ form.tipo_item }}</div>
-
-                <!-- Dynamic Fields -->
-                <div class="form-field" data-item-type="Piedras sueltas"><label for="{{ form.color_gema.id_for_label }}">Color Gema</label>{{ form.color_gema }}</div>
-                <div class="form-field" data-item-type="Piedras sueltas Joya"><label for="{{ form.peso.id_for_label }}">Peso</label>{{ form.peso }}</div>
-                <div class="form-field" data-item-type="Piedras sueltas Set de joyas"><label for="{{ form.cantidad.id_for_label }}">Cantidad</label>{{ form.cantidad }}</div>
-                <div class="form-field" data-item-type="Lote de gemas"><label for="{{ form.tipo_gema.id_for_label }}">Tipo de Gema</label>{{ form.tipo_gema }}</div>
-                <div class="form-field" data-item-type="Lote de gemas"><label for="{{ form.cantidad_total.id_for_label }}">Cantidad Total</label>{{ form.cantidad_total }}</div>
-                <div class="form-field" data-item-type="Lote de gemas"><label for="{{ form.peso_promedio.id_for_label }}">Peso Promedio</label>{{ form.peso_promedio }}</div>
-                <div class="form-field" data-item-type="Joya Set de joyas"><label for="{{ form.material_joya.id_for_label }}">Material Joya</label>{{ form.material_joya }}</div>
-                <div class="form-field" data-item-type="Joya"><label for="{{ form.tipo_joya.id_for_label }}">Tipo Joya</label>{{ form.tipo_joya }}</div>
-                <div class="form-field" data-item-type="Joya" id="seguro-field"><label for="{{ form.tiene_seguro.id_for_label }}">¿Tiene Seguro?</label>{{ form.tiene_seguro }}</div>
-                <div class="form-field" data-item-type="Set de joyas"><label for="{{ form.tipos_joya.id_for_label }}">Tipos de Joya</label>{{ form.tipos_joya }}</div>
-
-                <div class="flex space-x-4 mt-8">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Agregar Item</button>
-                    <button type="button" id="reset-button" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Reset</button>
-                </div>
-            </form>
+<body class="bg-gray-100 p-8" x-data="itemManager({{ orden.id }}, '{{ orden.tags|escapejs }}', '{{ csrf_token }}')">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">Orden #{{ orden.numero_orden }}</h1>
+            <button @click="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Agregar Item
+            </button>
         </div>
 
-        <!-- Live Preview Section -->
         <div class="bg-white p-8 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-6">Vista Previa del Item</h2>
-            <div id="preview-panel" class="space-y-4">
-                <div class="preview-field" data-preview="tags"><strong>Tags:</strong> <span id="preview-tags"></span></div>
-                <div class="preview-field" data-preview="tipo_certificado"><strong>Certificado:</strong> <span id="preview-tipo_certificado"></span></div>
-                <div class="preview-field" data-preview="tipo_item"><strong>Ítem:</strong> <span id="preview-tipo_item"></span></div>
-                <div class="preview-field" data-preview="color_gema"><strong>Color:</strong> <span id="preview-color_gema"></span></div>
-                <div class="preview-field" data-preview="peso"><strong>Peso:</strong> <span id="preview-peso"></span></div>
-                <div class="preview-field" data-preview="cantidad"><strong>Cantidad:</strong> <span id="preview-cantidad"></span></div>
-                <div class="preview-field" data-preview="tipo_gema"><strong>Tipo Gema:</strong> <span id="preview-tipo_gema"></span></div>
-                <div class="preview-field" data-preview="cantidad_total"><strong>Cantidad Total:</strong> <span id="preview-cantidad_total"></span></div>
-                <div class="preview-field" data-preview="peso_promedio"><strong>Peso Promedio:</strong> <span id="preview-peso_promedio"></span></div>
-                <div class="preview-field" data-preview="material_joya"><strong>Material:</strong> <span id="preview-material_joya"></span></div>
-                <div class="preview-field" data-preview="tipo_joya"><strong>Tipo Joya:</strong> <span id="preview-tipo_joya"></span></div>
-                <div class="preview-field" data-preview="tiene_seguro"><strong>Seguro:</strong> <span id="preview-tiene_seguro"></span></div>
-                <div class="preview-field" data-preview="tipos_joya"><strong>Tipos Joya:</strong> <span id="preview-tipos_joya"></span></div>
+            <h2 class="text-xl font-bold mb-4">Items Agregados: <span x-text="items.length"></span></h2>
+            <div id="item-list" class="space-y-4">
+                <template x-for="item in items" :key="item.id">
+                    <div class="p-4 border rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-bold" x-text="`Item #${item.id} - ${item.tipo_item}`"></p>
+                            <p class="text-sm text-gray-600" x-text="getItemSummary(item)"></p>
+                        </div>
+                        <button @click="editItem(item)" class="text-blue-500 hover:underline">Editar</button>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
 
+    <div x-show="isModalOpen" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @click.self="closeModal()">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-2xl w-full" x-trap="isModalOpen">
+            <h2 class="text-2xl font-bold mb-6" x-text="modalTitle"></h2>
+            <form @submit.prevent="saveItem" id="item-form" class="space-y-4" x-ref="form" @input="updateVisibleFields">
+                {% csrf_token %}
+                <div class="form-field" data-field-name="tags"><label>Tags</label>{{ form.tags }}</div>
+                <div class="form-field" data-field-name="tipo_certificado"><label>Tipo de Certificado</label>{{ form.tipo_certificado }}</div>
+                <div class="form-field" data-field-name="tipo_item"><label>Tipo de Ítem</label>{{ form.tipo_item }}</div>
+                <div class="form-field" data-field-name="color_gema"><label>Color Gema</label>{{ form.color_gema }}</div>
+                <div class="form-field" data-field-name="peso"><label>Peso</label>{{ form.peso }}</div>
+                <div class="form-field" data-field-name="cantidad"><label>Cantidad</label>{{ form.cantidad }}</div>
+                <div class="form-field" data-field-name="tipo_gema"><label>Tipo de Gema</label>{{ form.tipo_gema }}</div>
+                <div class="form-field" data-field-name="cantidad_total"><label>Cantidad Total</label>{{ form.cantidad_total }}</div>
+                <div class="form-field" data-field-name="peso_promedio"><label>Peso Promedio</label>{{ form.peso_promedio }}</div>
+                <div class="form-field" data-field-name="material_joya"><label>Material Joya</label>{{ form.material_joya }}</div>
+                <div class="form-field" data-field-name="tipo_joya"><label>Tipo Joya</label>{{ form.tipo_joya }}</div>
+                <div class="form-field" data-field-name="tiene_seguro"><label>¿Tiene Seguro?</label>{{ form.tiene_seguro }}</div>
+                <div class="form-field" data-field-name="tipos_joya"><label>Tipos de Joya</label>{{ form.tipos_joya }}</div>
+
+                <div class="flex justify-end space-x-4">
+                    <button type="button" @click="closeModal()" class="bg-gray-500 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded" :disabled="isLoading">
+                        <span x-show="!isLoading" x-text="isEditing ? 'Actualizar Item' : 'Guardar Item'"></span>
+                        <span x-show="isLoading">Guardando...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="toast.visible" x-cloak x-transition class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg">
+        <p x-text="toast.message"></p>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('item-form');
-            const resetButton = document.getElementById('reset-button');
-            const itemTypeSelector = form.querySelector('[name=tipo_item]');
-            const joyaTypeSelector = form.querySelector('[name=tipo_joya]');
-            const seguroField = document.getElementById('seguro-field');
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('itemManager', (ordenId, initialTags, csrfToken) => ({
+            isModalOpen: false, isLoading: false, isEditing: false, currentItemId: null, items: [],
+            modalTitle: 'Agregar Nuevo Item', toast: { visible: false, message: '' },
 
-            const fieldVisibilityRules = {
-                'Piedras sueltas': ['color_gema', 'peso', 'cantidad'],
-                'Lote de gemas': ['tipo_gema', 'cantidad_total', 'peso_promedio'],
-                'Joya': ['peso', 'material_joya', 'tipo_joya', 'color_gema'],
-                'Set de joyas': ['cantidad', 'material_joya', 'tipos_joya']
-            };
+            init() { this.fetchItems(); window.onbeforeunload = (e) => { if (this.isModalOpen && !this.isLoading) return "You have unsaved changes."; }; },
+            fetchItems() { fetch(`/api/orden/${ordenId}/items`).then(res => res.json()).then(data => this.items = data); },
+            openModal() {
+                this.isEditing = false; this.modalTitle = 'Agregar Nuevo Item';
+                this.$refs.form.reset(); this.$refs.form.tags.value = initialTags;
+                this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
+            },
+            editItem(item) {
+                this.isEditing = true; this.modalTitle = `Editar Item #${item.id}`; this.currentItemId = item.id;
+                const form = this.$refs.form;
+                for (const key in item) { if (form.elements[key]) form.elements[key].value = item[key]; }
+                this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
+            },
+            closeModal() { if (this.isLoading || confirm("¿Está seguro que desea cerrar sin guardar?")) this.isModalOpen = false; },
 
-            function updateFormDisplay() {
-                const selectedItemType = itemTypeSelector.value;
-                const visibleFields = ['tags', 'tipo_certificado', 'tipo_item', ...(fieldVisibilityRules[selectedItemType] || [])];
+            updateVisibleFields() {
+                const tipoItem = this.$refs.form.tipo_item.value;
+                const fieldConfig = {
+                    'Piedras sueltas': ['tags', 'tipo_certificado', 'tipo_item', 'color_gema', 'peso', 'cantidad'],
+                    'Lote de gemas': ['tags', 'tipo_certificado', 'tipo_item', 'tipo_gema', 'cantidad_total', 'peso_promedio'],
+                    'Joya': ['tags', 'tipo_certificado', 'tipo_item', 'material_joya', 'tipo_joya', 'color_gema', 'peso'],
+                    'Set de joyas': ['tags', 'tipo_certificado', 'tipo_item', 'material_joya', 'tipos_joya', 'cantidad']
+                };
+                const visible = fieldConfig[tipoItem] || ['tags', 'tipo_certificado', 'tipo_item'];
 
-                form.querySelectorAll('.form-field').forEach(field => {
-                    const fieldName = field.querySelector('[name]').name;
-                    field.style.display = visibleFields.includes(fieldName) ? 'block' : 'none';
-                });
+                this.$refs.form.querySelectorAll('.form-field').forEach(el => el.style.display = visible.includes(el.dataset.fieldName) ? 'block' : 'none');
 
-                const selectedJoyaType = joyaTypeSelector.options[joyaTypeSelector.selectedIndex]?.text;
-                seguroField.style.display = selectedItemType === 'Joya' && selectedJoyaType === 'Topos' ? 'block' : 'none';
-
-                updatePreview();
-            }
-
-            function updatePreview() {
-                document.querySelectorAll('.preview-field').forEach(field => {
-                    const previewName = field.dataset.preview;
-                    const input = form.querySelector(`[name=${previewName}]`);
-                    const output = field.querySelector('span');
-                    let value = '';
-                    let text = '';
-
-                    if (input.tagName === 'SELECT') {
-                        if (input.multiple) {
-                            value = Array.from(input.selectedOptions).map(opt => opt.value).join('');
-                            text = Array.from(input.selectedOptions).map(opt => opt.text).join(', ');
-                        } else if (input.selectedIndex > -1) {
-                            value = input.value;
-                            text = input.options[input.selectedIndex].text;
-                        }
-                    } else if (input.type === 'checkbox') {
-                        value = input.checked;
-                        text = input.checked ? 'Sí' : 'No';
-                    } else {
-                        value = input.value;
-                        text = input.value;
-                    }
-
-                    output.textContent = text;
-                    field.style.display = value ? 'block' : 'none';
-                });
-
-                const selectedItemType = itemTypeSelector.value;
-                const selectedJoyaType = joyaTypeSelector.options[joyaTypeSelector.selectedIndex]?.text;
-                const seguroPreview = document.querySelector('[data-preview=tiene_seguro]');
-                if (selectedItemType === 'Joya' && selectedJoyaType === 'Topos') {
-                    seguroPreview.style.display = 'block';
-                    seguroPreview.querySelector('span').textContent = form.querySelector('[name=tiene_seguro]').checked ? 'Sí' : 'No';
+                const tipoJoya = this.$refs.form.tipo_joya;
+                const seguroField = this.$refs.form.querySelector('[data-field-name=tiene_seguro]');
+                if (tipoItem === 'Joya' && tipoJoya.options[tipoJoya.selectedIndex]?.text === 'Topos') {
+                    seguroField.style.display = 'block';
                 } else {
-                    seguroPreview.style.display = 'none';
+                    seguroField.style.display = 'none';
                 }
-            }
+            },
 
-            function resetForm() {
-                form.reset();
-                updateFormDisplay();
-            }
+            saveItem() {
+                this.isLoading = true;
+                const data = Object.fromEntries(new FormData(this.$refs.form).entries());
+                const url = this.isEditing ? `/api/orden/${ordenId}/item/${this.currentItemId}` : `/api/orden/${ordenId}/items`;
 
-            form.addEventListener('input', updateFormDisplay);
-            resetButton.addEventListener('click', resetForm);
+                fetch(url, {
+                    method: this.isEditing ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        this.fetchItems();
+                        this.showToast('Item guardado exitosamente');
+                        if (this.isEditing) this.isModalOpen = false; else this.openModal();
+                    } else {
+                        alert('Error: ' + JSON.stringify(result.errors));
+                    }
+                })
+                .finally(() => { this.isLoading = false; });
+            },
 
-            updateFormDisplay();
-        });
+            showToast(message) { this.toast.message = message; this.toast.visible = true; setTimeout(() => this.toast.visible = false, 3000); },
+            getItemSummary(item) { return `Certificado: ${item.tipo_certificado}, Peso: ${item.peso || 'N/A'}`; }
+        }));
+    });
     </script>
 </body>
 </html>
