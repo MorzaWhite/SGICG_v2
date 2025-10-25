@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Nuevo Item</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .field-wrapper { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto mt-10">
+        <div class="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h1 class="text-2xl font-bold mb-6">Agregar Item a la Orden {{ orden.numero_orden }}</h1>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-4 px-4 py-2 rounded font-medium text-white {% if message.tags == 'success' %}bg-green-500{% else %}bg-red-500{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="mb-4 px-4 py-2 rounded font-medium text-white bg-red-500">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" id="item-form">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label for="{{ form.tipo_certificado.id_for_label }}" class="block text-sm font-medium text-gray-700">Tipo de Certificado</label>
+                        {{ form.tipo_certificado }}
+                    </div>
+                    <div>
+                        <label for="{{ form.tipo_item.id_for_label }}" class="block text-sm font-medium text-gray-700">Tipo de Item</label>
+                        {{ form.tipo_item }}
+                    </div>
+
+                    <!-- Dynamic Fields -->
+                    <div class="field-wrapper" data-types="Piedras sueltas Joya"><label for="{{ form.color_gema.id_for_label }}">Color Gema</label>{{ form.color_gema }}</div>
+                    <div class="field-wrapper" data-types="Piedras sueltas Joya"><label for="{{ form.peso.id_for_label }}">Peso</label>{{ form.peso }}</div>
+                    <div class="field-wrapper" data-types="Piedras sueltas Set de joyas"><label for="{{ form.cantidad.id_for_label }}">Cantidad</label>{{ form.cantidad }}</div>
+                    <div class="field-wrapper" data-types="Lote de gemas"><label for="{{ form.cantidad_total.id_for_label }}">Cantidad Total</label>{{ form.cantidad_total }}</div>
+                    <div class="field-wrapper" data-types="Lote de gemas"><label for="{{ form.tipo_gema.id_for_label }}">Tipo de Gema</label>{{ form.tipo_gema }}</div>
+                    <div class="field-wrapper" data-types="Lote de gemas"><label for="{{ form.peso_promedio.id_for_label }}">Peso Promedio</label>{{ form.peso_promedio }}</div>
+                    <div class="field-wrapper" data-types="Joya"><label for="{{ form.tipo_joya.id_for_label }}">Tipo de Joya</label>{{ form.tipo_joya }}</div>
+                    <div class="field-wrapper" data-types="Joya Set de joyas"><label for="{{ form.material_joya.id_for_label }}">Material</label>{{ form.material_joya }}</div>
+                    <div class="field-wrapper" data-types="Set de joyas"><label for="{{ form.tipos_joya.id_for_label }}">Tipos de Joya (multiple)</label>{{ form.tipos_joya }}</div>
+                </div>
+                <div class="mt-8">
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Agregar Item</button>
+                    <button type="button" id="reset-button" class="w-full mt-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoItemSelector = document.querySelector('[name=tipo_item]');
+            const allFields = document.querySelectorAll('.field-wrapper');
+            const form = document.getElementById('item-form');
+            const resetButton = document.getElementById('reset-button');
+
+            function updateFormFields() {
+                const selectedValue = tipoItemSelector.value;
+                allFields.forEach(field => {
+                    if (selectedValue && field.dataset.types.includes(selectedValue)) {
+                        field.style.display = 'block';
+                    } else {
+                        field.style.display = 'none';
+                    }
+                });
+            }
+
+            function resetForm() {
+                form.reset();
+                // After form.reset(), the dropdown goes to its initial state, which might be an empty value.
+                // We need to ensure the correct fields are shown/hidden based on this reset state.
+                updateFormFields();
+            }
+
+            tipoItemSelector.addEventListener('change', updateFormFields);
+            resetButton.addEventListener('click', resetForm);
+
+            updateFormFields();
+        });
+    </script>
+</body>
+</html>

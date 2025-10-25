@@ -22,26 +22,6 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="grid grid-cols-1 gap-6">
-                    <div>
-                        <label for="{{ form.tipo_certificado.id_for_label }}" class="block text-sm font-medium text-gray-700">Tipo de Certificado</label>
-                        {{ form.tipo_certificado }}
-                    </div>
-                    <div>
-                        <label for="{{ form.color_gema.id_for_label }}" class="block text-sm font-medium text-gray-700">Color de Gema</label>
-                        {{ form.color_gema }}
-                    </div>
-                    <div>
-                        <label for="{{ form.peso.id_for_label }}" class="block text-sm font-medium text-gray-700">Peso (ct)</label>
-                        {{ form.peso }}
-                    </div>
-                    <div>
-                        <label for="{{ form.tipo_joya.id_for_label }}" class="block text-sm font-medium text-gray-700">Tipo de Joya (Opcional)</label>
-                        {{ form.tipo_joya }}
-                    </div>
-                    <div>
-                        <label for="{{ form.material_joya.id_for_label }}" class="block text-sm font-medium text-gray-700">Material de Joya (Opcional)</label>
-                        {{ form.material_joya }}
-                    </div>
                     <div class="flex items-center">
                         {{ form.tiene_seguro }}
                         <label for="{{ form.tiene_seguro.id_for_label }}" class="ml-2 block text-sm text-gray-900">¿Tiene Seguro?</label>
@@ -53,7 +33,7 @@
                 </div>
                 <div class="mt-8">
                     <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Crear Orden
+                        Crear Orden y Agregar Items
                     </button>
                 </div>
             </form>
