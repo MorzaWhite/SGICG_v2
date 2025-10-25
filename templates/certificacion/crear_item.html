@@ -70,75 +70,88 @@
         <p x-text="toast.message"></p>
     </div>
 
-    <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('itemManager', (ordenId, initialTags, csrfToken) => ({
-            isModalOpen: false, isLoading: false, isEditing: false, currentItemId: null, items: [],
-            modalTitle: 'Agregar Nuevo Item', toast: { visible: false, message: '' },
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('itemManager', (ordenId, initialTags, csrfToken) => ({
+        isModalOpen: false, isLoading: false, isEditing: false, currentItemId: null, items: [],
+        modalTitle: 'Agregar Nuevo Item', toast: { visible: false, message: '' },
 
-            init() { this.fetchItems(); window.onbeforeunload = (e) => { if (this.isModalOpen && !this.isLoading) return "You have unsaved changes."; }; },
-            fetchItems() { fetch(`/api/orden/${ordenId}/items`).then(res => res.json()).then(data => this.items = data); },
-            openModal() {
-                this.isEditing = false; this.modalTitle = 'Agregar Nuevo Item';
-                this.$refs.form.reset(); this.$refs.form.tags.value = initialTags;
-                this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
-            },
-            editItem(item) {
-                this.isEditing = true; this.modalTitle = `Editar Item #${item.id}`; this.currentItemId = item.id;
-                const form = this.$refs.form;
-                for (const key in item) { if (form.elements[key]) form.elements[key].value = item[key]; }
-                this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
-            },
-            closeModal() { if (this.isLoading || confirm("¿Está seguro que desea cerrar sin guardar?")) this.isModalOpen = false; },
-
-            updateVisibleFields() {
-                const tipoItem = this.$refs.form.tipo_item.value;
-                const fieldConfig = {
-                    'Piedras sueltas': ['tags', 'tipo_certificado', 'tipo_item', 'color_gema', 'peso', 'cantidad'],
-                    'Lote de gemas': ['tags', 'tipo_certificado', 'tipo_item', 'tipo_gema', 'cantidad_total', 'peso_promedio'],
-                    'Joya': ['tags', 'tipo_certificado', 'tipo_item', 'material_joya', 'tipo_joya', 'color_gema', 'peso'],
-                    'Set de joyas': ['tags', 'tipo_certificado', 'tipo_item', 'material_joya', 'tipos_joya', 'cantidad']
-                };
-                const visible = fieldConfig[tipoItem] || ['tags', 'tipo_certificado', 'tipo_item'];
-
-                this.$refs.form.querySelectorAll('.form-field').forEach(el => el.style.display = visible.includes(el.dataset.fieldName) ? 'block' : 'none');
-
-                const tipoJoya = this.$refs.form.tipo_joya;
-                const seguroField = this.$refs.form.querySelector('[data-field-name=tiene_seguro]');
-                if (tipoItem === 'Joya' && tipoJoya.options[tipoJoya.selectedIndex]?.text === 'Topos') {
-                    seguroField.style.display = 'block';
-                } else {
-                    seguroField.style.display = 'none';
-                }
-            },
-
-            saveItem() {
-                this.isLoading = true;
-                const data = Object.fromEntries(new FormData(this.$refs.form).entries());
-                const url = this.isEditing ? `/api/orden/${ordenId}/item/${this.currentItemId}` : `/api/orden/${ordenId}/items`;
-
-                fetch(url, {
-                    method: this.isEditing ? 'PUT' : 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                    body: JSON.stringify(data)
-                })
+        init() {
+            this.fetchItems();
+            window.onbeforeunload = (e) => { if (this.isModalOpen && !this.isLoading) return "You have unsaved changes."; };
+        },
+        fetchItems() {
+            fetch(`/api/orden/${ordenId}/items/`)
                 .then(res => res.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        this.fetchItems();
-                        this.showToast('Item guardado exitosamente');
-                        if (this.isEditing) this.isModalOpen = false; else this.openModal();
-                    } else {
-                        alert('Error: ' + JSON.stringify(result.errors));
-                    }
-                })
-                .finally(() => { this.isLoading = false; });
-            },
+                .then(data => this.items = data);
+        },
+        openModal() {
+            this.isEditing = false; this.modalTitle = 'Agregar Nuevo Item';
+            this.$refs.form.reset(); this.$refs.form.tags.value = initialTags;
+            this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
+        },
+        editItem(item) {
+            this.isEditing = true; this.modalTitle = `Editar Item #${item.id}`; this.currentItemId = item.id;
+            const form = this.$refs.form;
+            for (const key in item) { if (form.elements[key]) form.elements[key].value = item[key]; }
+            this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
+        },
+        closeModal() { if (this.isLoading || confirm("¿Está seguro que desea cerrar sin guardar?")) this.isModalOpen = false; },
 
-            showToast(message) { this.toast.message = message; this.toast.visible = true; setTimeout(() => this.toast.visible = false, 3000); },
-            getItemSummary(item) { return `Certificado: ${item.tipo_certificado}, Peso: ${item.peso || 'N/A'}`; }
-        }));
-    });
-    </script>
+        updateVisibleFields() {
+            const tipoItem = this.$refs.form.tipo_item.value;
+            const fieldConfig = {
+                'Piedras sueltas': ['tags', 'tipo_certificado', 'tipo_item', 'color_gema', 'peso', 'cantidad'],
+                'Lote de gemas': ['tags', 'tipo_certificado', 'tipo_item', 'tipo_gema', 'cantidad_total', 'peso_promedio'],
+                'Joya': ['tags', 'tipo_certificado', 'tipo_item', 'material_joya', 'tipo_joya', 'color_gema', 'peso'],
+                'Set de joyas': ['tags', 'tipo_certificado', 'tipo_item', 'material_joya', 'tipos_joya', 'cantidad']
+            };
+            const visible = fieldConfig[tipoItem] || ['tags', 'tipo_certificado', 'tipo_item'];
+
+            this.$refs.form.querySelectorAll('.form-field').forEach(el => el.style.display = visible.includes(el.dataset.fieldName) ? 'block' : 'none');
+
+            const tipoJoya = this.$refs.form.tipo_joya;
+            const seguroField = this.$refs.form.querySelector('[data-field-name=tiene_seguro]');
+            if (tipoItem === 'Joya' && tipoJoya.options[tipoJoya.selectedIndex]?.text === 'Topos') {
+                seguroField.style.display = 'block';
+            } else {
+                seguroField.style.display = 'none';
+            }
+        },
+
+        saveItem() {
+            this.isLoading = true;
+            const data = Object.fromEntries(new FormData(this.$refs.form).entries());
+            const url = this.isEditing ? `/api/orden/${ordenId}/item/${this.currentItemId}/` : `/api/orden/${ordenId}/items/`;
+
+            fetch(url, {
+                method: this.isEditing ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    this.fetchItems();
+                    this.showToast('✅ Item guardado correctamente');
+                    if (this.isEditing) {
+                        this.isModalOpen = false;
+                    } else {
+                        this.$refs.form.reset();
+                        this.$refs.form.tags.value = initialTags; // Keep tags
+                        this.updateVisibleFields();
+                    }
+                } else {
+                    this.showToast('⚠️ Error al guardar el item: ' + JSON.stringify(result.errors));
+                }
+            })
+            .finally(() => { this.isLoading = false; });
+        },
+
+        showToast(message) { this.toast.message = message; this.toast.visible = true; setTimeout(() => this.toast.visible = false, 3000); },
+        getItemSummary(item) { return `Certificado: ${item.tipo_certificado}, Peso: ${item.peso || 'N/A'}`; }
+    }));
+});
+</script>
 </body>
 </html>

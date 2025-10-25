@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import json
@@ -22,12 +22,13 @@ def crear_orden(request):
         form = OrdenForm()
     return render(request, 'certificacion/crear_orden.html', {'form': form})
 
+@login_required
 def crear_item(request, orden_id):
     orden = get_object_or_404(Orden, id=orden_id)
     form = ItemForm(initial={'tags': orden.tags})
     return render(request, 'certificacion/crear_item.html', {'form': form, 'orden': orden})
 
-@csrf_exempt
+@login_required
 def item_api_view(request, orden_id, item_id=None):
     orden = get_object_or_404(Orden, id=orden_id)
 
@@ -35,11 +36,11 @@ def item_api_view(request, orden_id, item_id=None):
         try:
             data = json.loads(request.body)
             item = item_service.save_item(orden, data)
-            return JsonResponse({'status': 'success', 'item_id': item.id}, status=201)
+            return JsonResponse({'success': True, 'message': 'Item created successfully', 'item_id': item.id}, status=201)
         except ValidationError as e:
-            return JsonResponse({'status': 'error', 'errors': e.message_dict}, status=400)
+            return JsonResponse({'success': False, 'errors': e.message_dict}, status=400)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
     if request.method == 'GET':
         items = Item.objects.filter(orden=orden).values()
@@ -47,15 +48,15 @@ def item_api_view(request, orden_id, item_id=None):
 
     if request.method == 'PUT':
         if not item_id:
-            return JsonResponse({'status': 'error', 'message': 'Item ID is required for updates.'}, status=400)
+            return JsonResponse({'success': False, 'message': 'Item ID is required for updates.'}, status=400)
         try:
             item = get_object_or_404(Item, id=item_id, orden=orden)
             data = json.loads(request.body)
             item = item_service.update_item(item, data)
-            return JsonResponse({'status': 'success', 'item_id': item.id})
+            return JsonResponse({'success': True, 'message': 'Item updated successfully', 'item_id': item.id})
         except ValidationError as e:
-            return JsonResponse({'status': 'error', 'errors': e.message_dict}, status=400)
+            return JsonResponse({'success': False, 'errors': e.message_dict}, status=400)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)

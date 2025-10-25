@@ -1,5 +1,7 @@
-from django.test import TestCase
+from django.test import TestCase, LiveServerTestCase
 from django.utils import timezone
+from django.contrib.auth.models import User
+from playwright.sync_api import sync_playwright
 from .models import Orden, Item, TipoJoya, MaterialJoya
 from .services import item_service
 
@@ -64,3 +66,42 @@ class ItemServiceTest(TestCase):
         item_service.save_item(self.orden, item_data)
         self.orden.refresh_from_db()
         self.assertNotEqual(self.orden.fecha_entrega_sugerida, initial_date)
+
+class ItemCreationUITest(LiveServerTestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.orden = Orden.objects.create(numero_orden="UI-TEST-001", fecha_creacion=timezone.now(), fecha_entrega_sugerida=timezone.now())
+
+    def test_add_item_via_ajax_modal(self):
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+
+            # Log in
+            page.goto(self.live_server_url + '/admin/login/')
+            page.fill('input[name=username]', 'testuser')
+            page.fill('input[name=password]', 'password')
+            page.click('input[type=submit]')
+
+            # Navigate to item creation page
+            page.goto(f"{self.live_server_url}/orden/{self.orden.id}/item/nuevo/")
+            print(page.content())
+            page.pause()
+
+            # Open modal and fill form
+            page.click("text=Agregar Item")
+            page.select_option("select[name='tipo_certificado']", "Verbal")
+            page.select_option("select[name='tipo_item']", "Piedras sueltas")
+            page.fill("input[name='color_gema']", "Rojo")
+            page.fill("input[name='peso']", "1.0")
+            page.fill("input[name='cantidad']", "1")
+
+            # Submit form and check for toast
+            page.click("text=Guardar Item")
+            self.assertTrue(page.locator("text=✅ Item guardado correctamente").is_visible())
+
+            # Check if item counter updated
+            self.assertTrue(page.locator("text=Items Agregados: 1").is_visible())
+
+            browser.close()
