@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import json
@@ -22,13 +21,11 @@ def crear_orden(request):
         form = OrdenForm()
     return render(request, 'certificacion/crear_orden.html', {'form': form})
 
-@login_required
 def crear_item(request, orden_id):
     orden = get_object_or_404(Orden, id=orden_id)
     form = ItemForm(initial={'tags': orden.tags})
     return render(request, 'certificacion/crear_item.html', {'form': form, 'orden': orden})
 
-@login_required
 def item_api_view(request, orden_id, item_id=None):
     orden = get_object_or_404(Orden, id=orden_id)
 

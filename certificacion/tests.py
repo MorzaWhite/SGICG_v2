@@ -78,6 +78,8 @@ class ItemCreationUITest(LiveServerTestCase):
             browser = p.chromium.launch()
             page = browser.new_page()
 
+            page.on("console", lambda msg: print(msg.text))
+
             # Log in
             page.goto(self.live_server_url + '/admin/login/')
             page.fill('input[name=username]', 'testuser')

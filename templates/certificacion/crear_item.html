@@ -131,6 +131,7 @@ document.addEventListener('alpine:init', () => {
             })
             .then(res => res.json())
             .then(result => {
+                console.log(result);
                 if (result.success) {
                     this.fetchItems();
                     this.showToast('✅ Item guardado correctamente');
