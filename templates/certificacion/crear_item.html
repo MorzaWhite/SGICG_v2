@@ -81,7 +81,7 @@ document.addEventListener('alpine:init', () => {
             window.onbeforeunload = (e) => { if (this.isModalOpen && !this.isLoading) return "You have unsaved changes."; };
         },
         fetchItems() {
-            fetch(`/api/orden/${ordenId}/items/`)
+            fetch(`/orden/api/orden/${ordenId}/items/`)
                 .then(res => res.json())
                 .then(data => this.items = data);
         },
@@ -96,7 +96,16 @@ document.addEventListener('alpine:init', () => {
             for (const key in item) { if (form.elements[key]) form.elements[key].value = item[key]; }
             this.isModalOpen = true; this.$nextTick(() => this.updateVisibleFields());
         },
-        closeModal() { if (this.isLoading || confirm("¿Está seguro que desea cerrar sin guardar?")) this.isModalOpen = false; },
+        closeModal() {
+            if (!this.isLoading && confirm("¿Está seguro que desea cerrar? Los cambios no guardados se perderán.")) {
+                this.isModalOpen = false;
+                this.isEditing = false;
+                this.$refs.form.reset();
+            } else if (this.isLoading) {
+                // If loading, just close without confirm.
+                this.isModalOpen = false;
+            }
+        },
 
         updateVisibleFields() {
             const tipoItem = this.$refs.form.tipo_item.value;
@@ -122,29 +131,49 @@ document.addEventListener('alpine:init', () => {
         saveItem() {
             this.isLoading = true;
             const data = Object.fromEntries(new FormData(this.$refs.form).entries());
-            const url = this.isEditing ? `/api/orden/${ordenId}/item/${this.currentItemId}/` : `/api/orden/${ordenId}/items/`;
+            const url = this.isEditing ? `/orden/api/orden/${ordenId}/item/${this.currentItemId}/` : `/orden/api/orden/${ordenId}/items/`;
 
             fetch(url, {
                 method: this.isEditing ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify(data)
             })
-            .then(res => res.json())
+            .then(response => {
+                if (!response.ok) {
+                    // Try to parse error json, fallback to generic error
+                    return response.json().then(err => Promise.reject(err)).catch(() => Promise.reject({ message: `Error del servidor: ${response.status}` }));
+                }
+                return response.json();
+            })
             .then(result => {
-                console.log(result);
                 if (result.success) {
                     this.fetchItems();
                     this.showToast('✅ Item guardado correctamente');
                     if (this.isEditing) {
                         this.isModalOpen = false;
                     } else {
+                        // Reset form for next item
                         this.$refs.form.reset();
-                        this.$refs.form.tags.value = initialTags; // Keep tags
+                        this.$refs.form.tags.value = initialTags;
                         this.updateVisibleFields();
                     }
                 } else {
-                    this.showToast('⚠️ Error al guardar el item: ' + JSON.stringify(result.errors));
+                     // Fallback for 200 OK with success: false
+                    const errorMessages = Object.entries(result.errors || {}).map(([field, messages]) => `${field}: ${messages.join(', ')}`).join('. ');
+                    this.showToast(`⚠️ Error: ${errorMessages || result.message || 'Error desconocido'}`);
                 }
+            })
+            .catch(error => {
+                console.error('Error al guardar:', error);
+                let errorMessage = 'Ocurrió un error de red o servidor.';
+                if (error.errors) {
+                    // Validation errors
+                    errorMessage = Object.entries(error.errors).map(([field, messages]) => `${field}: ${messages.join(', ')}`).join('. ');
+                } else if (error.message) {
+                    // Other server errors
+                    errorMessage = error.message;
+                }
+                this.showToast(`❌ Error: ${errorMessage}`);
             })
             .finally(() => { this.isLoading = false; });
         },
